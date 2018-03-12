@@ -1,0 +1,90 @@
+import Std;
+import String;
+import Xcb;
+
+import Config;
+
+
+type node = {
+  win : Xcb.window;
+  next : ref node;
+  prev : ref node;
+  _ : array[16] byte;
+};
+
+
+type list 'a =
+  | Nil
+  | Cons ('a, list 'a);
+
+
+type desktop = list ref node;
+
+
+conn    : ref Xcb.connection;
+screen  : ref Xcb.screen;
+pipe_fd : i16;
+pipe_f  : string;
+
+
+proc tile () {
+  if not head { return; };
+
+  if (not head.next) {
+    move_resize head.win gap gap
+      (screen_w - gap * 2 - bord * 2)
+      (screen_h - gap * 2 - bord * 2);
+  } else {
+    move_resize head.win gap gap
+      (master_size - gap * 2 - bord * 2)
+      (screen_h - gap * 2 - bord * 2);
+    w : ref node = head;
+    y : u16 = 0;
+    n : u8  = 0;
+    while w.next {
+      incr n;
+      w = w.next;
+    };
+
+    height : u16 = screen_h / n;
+  };
+};
+
+
+proc update_current () {
+  w : ref node;
+
+  for_each ... {
+    b : array[1] u32 = 
+  };
+};
+
+
+proc quit () {
+  run = false;
+  puts "Thanks for using!";
+
+  for_each desktops {
+    free it;
+  };
+
+  close pipe_fd; unlink pipe_f;
+  Xcb.disconnect conn;
+
+  exit 0;
+};
+
+
+proc main () : i16 {
+  conn = Xcb.connect NULL NULL;
+  if Xcb.connection_has_error conn {
+    return 1;
+  };
+
+  setup ();
+  signal SIGINT quit;
+  p "Welcome to hootwm.";
+  event_loop ();
+
+  return 0;
+};
