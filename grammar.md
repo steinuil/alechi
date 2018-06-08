@@ -21,6 +21,9 @@ declaration ::=
   | (union <ident>
       (<ident> <type-expr>) ...)
 
+  | (enum <ident>
+      <enum-item> ...)
+
   | (decl <ident> <type-expr>
       <expression>?)
 
@@ -36,12 +39,18 @@ constant ::=
   | ('enum <string>)
 
 
+enum-item ::=
+  | <ident>
+  | (<ident> <constant>)
+
+
 type-expr ::=
   | <ident>
 
 
 expression ::=
   | <constant>
+  | <ident>
   | (<ident> <expression> ...)
 
 

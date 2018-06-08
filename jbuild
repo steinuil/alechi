@@ -3,12 +3,6 @@
 (library
  ((name compiler)
   (libraries (sexplib))
-  (modules (compiler))
   (inline_tests
    ((deps (hello.als))))
   (preprocess (pps (ppx_inline_test)))))
-
-(executable
- ((name alechi)
-  (modules (alechi))
-  (libraries (compiler sexplib))))
