@@ -172,42 +172,119 @@ let%test_unit "parse" =
   ()
 
 
-(* Generate *)
-(*
-let str_typ = function
+
+
+let rec str_type_expr = function
   | Basic t -> t
 
-let str_proc_args = function
-  | [] -> "void"
-  | _ -> failwith "not supported rn"
 
-let str_const = function
-  | IntConstant n | FloatConstant n | CharConstant n | EnumConstant n ->
-    n
-  | StrLiteral s ->  "\"" ^ String.escaped s ^ "\""
+let str_constant = function
+  | IntConstant c
+  | FloatConstant c
+  | EnumConstant c -> c
+  | CharConstant c -> "'" ^ String.escaped c ^ "'"
+  | StrLiteral s -> "\"" ^ String.escaped s ^ "\""
 
 
-let str_expr = function
-  | Constant c -> str_const c
+let rec str_expression = function
+  | Constant c -> str_constant c
+  | Variable v -> v
+  | Funcall (f, args) ->
+    let args = List.map str_expression args in
+    f ^ "(" ^ String.concat "," args ^ ")"
 
-let generate out =
-  let fe fmt = Printf.fprintf out (fmt ^^ "\n") in
-  let fo fmt = Printf.fprintf out fmt in
-  let po s = output_string out s; output_char out '\n' in
-  List.iter (function
-    | Import header ->
-      fe "#include \"%s\"" header
-    | Proc (name, args, typ, stmts) ->
-      fo "%s %s(%s){" (str_typ typ) name
-        (str_proc_args args);
-      stmts |> List.iter (function
-        | Return e ->
-          fo "return %s;" (str_expr e)
-        | Funcall (fn, args) ->
-          fo "%s(%s);" fn
-            (String.concat "," (List.map str_expr args))
-      );
-      po "}"
-  )
 
-*)
+let rec str_statement = function
+  | DeclStmt (n, t, None) ->
+    let t = str_type_expr t in
+    t ^ " " ^ n ^ ";"
+  | DeclStmt (n, t, Some v) ->
+    let t = str_type_expr t in
+    let v = str_expression v in
+    t ^ " " ^ n ^ "=" ^ v ^ ";"
+
+  | SetStmt (n, v) ->
+    let v = str_expression v in
+    n ^ "=" ^ v ^ ";"
+
+  | Ignore expr ->
+    let expr = str_expression expr in
+    expr ^ ";"
+
+  | Label lbl ->
+    "\n" ^ lbl ^ ":\n"
+
+  | Goto lbl ->
+    "goto " ^ lbl ^ ";"
+
+  | IfStmt (cond, t_branch, f_branch) ->
+    let cond = str_expression cond in
+    let t_branch = List.map str_statement t_branch in
+    let f_branch = List.map str_statement f_branch in
+    "if(" ^ cond ^ "){" ^ String.concat "" t_branch
+    ^ "}else{" ^ String.concat "" f_branch ^ "}"
+
+  | Return expr ->
+    let expr = str_expression expr in
+    "return (" ^ expr ^ ");"
+
+
+let str_declaration = function
+  | Include str ->
+    "\n#include<" ^ str ^ ">\n"
+
+  | IncludeRel str ->
+    "\n#include\"" ^ str ^ "\"\n"
+
+  | Typedef (nm, t) ->
+    let t = str_type_expr t in
+    "typedef " ^ t ^ " " ^ nm ^ ";"
+
+  | Struct (nm, fields) ->
+    let fields = List.map (fun (n, t) ->
+      let t = str_type_expr t in
+      t ^ " " ^ n ^ ";"
+    ) fields in
+    "struct " ^ nm ^ "{" ^ String.concat "" fields ^ "};"
+
+  | Union (nm, fields) ->
+    let fields = List.map (fun (n, t) ->
+      let t = str_type_expr t in
+      t ^ " " ^ n ^ ";"
+    ) fields in
+    "union " ^ nm ^ "{" ^ String.concat "" fields ^ "};"
+
+  | Decl (nm, t, None) ->
+    let t = str_type_expr t in
+    t ^ " " ^ nm ^ ";"
+
+  | Decl (nm, t, Some e) ->
+    let t = str_type_expr t in
+    let e = str_expression e in
+    t ^ " " ^ nm ^ "=" ^ e ^ ";"
+
+  | Proc (nm, args, return_t, body) ->
+    let args = List.map (fun (n, t) ->
+      let t = str_type_expr t in
+      t ^ " " ^ n
+    ) args in
+    let return_t = str_type_expr return_t in
+    let body = List.map str_statement body in
+    return_t ^ " " ^ nm ^ "(" ^ String.concat "," args ^ "){"
+    ^ String.concat "" body ^ "}"
+
+
+
+
+let%test_unit "generate" =
+  let f = Sexplib.Sexp.load_sexps "hello.als" in
+  let decls = List.map parse_declaration f in
+  let out = open_out "test.c" in
+  try
+    decls |> List.iter (fun d ->
+      output_string out (str_declaration d)
+    );
+    close_out out
+  with exn ->
+    close_out out;
+    raise exn
