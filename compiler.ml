@@ -31,7 +31,9 @@ type statement =
   | Ignore of expression
   | Label of string
   | Goto of string
-  | IfStmt of expression * statement list * statement list
+  | If_stmt of expression * statement list * statement list
+  | For_stmt of statement * expression * expression * statement list
+  | While_stmt of expression * statement list
   | Return of expression
 
 
@@ -99,13 +101,25 @@ let rec parse_statement = function
   | List [Atom "if"; expr; List t_branch] ->
     let expr = parse_expr expr in
     let t_branch = List.map parse_statement t_branch in
-    IfStmt (expr, t_branch, [])
+    If_stmt (expr, t_branch, [])
 
   | List [Atom "if"; expr; List t_branch; List f_branch] ->
     let expr = parse_expr expr in
     let t_branch = List.map parse_statement t_branch in
     let f_branch = List.map parse_statement f_branch in
-    IfStmt (expr, t_branch, f_branch)
+    If_stmt (expr, t_branch, f_branch)
+
+  | List (Atom "while" :: expr :: body) ->
+    let expr = parse_expr expr in
+    let body = List.map parse_statement body in
+    While_stmt (expr, body)
+
+  | List (Atom "for" :: List [e1; e2; e3] :: body) ->
+    let e1 = parse_statement e1 in
+    let e2 = parse_expr e2 in
+    let e3 = parse_expr e3 in
+    let body = List.map parse_statement body in
+    For_stmt (e1, e2, e3, body)
 
   | List [Atom "return"; expr] ->
     let expr = parse_expr expr in
@@ -186,9 +200,30 @@ let str_constant = function
   | StrLiteral s -> "\"" ^ String.escaped s ^ "\""
 
 
+let bin_ops =
+  [ "+" ; "-" ; "*" ; "/" ; "%"
+  ; "<<" ; ">>" ; "<" ; ">" ; "<=" ; ">="
+  ; "==" ; "!=" ; "&" ; "^" ; ";"
+  ; "&&" ; ";;" ]
+
+
+let un_ops =
+  [ "++"; "--"; "+"; "-"; "~"; "!" ]
+
+
+
 let rec str_expression = function
   | Constant c -> str_constant c
   | Variable v -> v
+  | Funcall (f, [arg1; arg2]) when List.mem f bin_ops ->
+    let arg1 = str_expression arg1 in
+    let arg2 = str_expression arg2 in
+    "(" ^ arg1 ^ f ^ arg2 ^ ")"
+
+  | Funcall (f, [arg]) when List.mem f un_ops ->
+    let arg = str_expression arg in
+    "(" ^ f ^ arg ^ ")"
+
   | Funcall (f, args) ->
     let args = List.map str_expression args in
     f ^ "(" ^ String.concat "," args ^ ")"
@@ -217,16 +252,29 @@ let rec str_statement = function
   | Goto lbl ->
     "goto " ^ lbl ^ ";"
 
-  | IfStmt (cond, t_branch, f_branch) ->
+  | If_stmt (cond, t_branch, f_branch) ->
     let cond = str_expression cond in
     let t_branch = List.map str_statement t_branch in
     let f_branch = List.map str_statement f_branch in
     "if(" ^ cond ^ "){" ^ String.concat "" t_branch
     ^ "}else{" ^ String.concat "" f_branch ^ "}"
 
+  | For_stmt (clause, e1, e2, body) ->
+    let clause = str_statement clause in
+    let e1 = str_expression e1 in
+    let e2 = str_expression e2 in
+    let body = List.map str_statement body in
+    "for(" ^ clause ^ e1 ^ ";" ^ e2 ^ "){"
+    ^ String.concat "" body ^ "}"
+
+  | While_stmt (expr, body) ->
+    let expr = str_expression expr in
+    let body = List.map str_statement body in
+    "while(" ^ expr ^ "){" ^ String.concat "" body ^ "}"
+
   | Return expr ->
     let expr = str_expression expr in
-    "return (" ^ expr ^ ");"
+    "return(" ^ expr ^ ");"
 
 
 let str_declaration = function

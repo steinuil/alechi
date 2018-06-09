@@ -62,8 +62,12 @@ statement ::=
   | (label <ident>)
   | (goto <ident>)
   | (if <expression>
-      <statement>
-      <statement>?)
+      (<statement> ...)
+      (<statement> ...)?)
+  | (while <expression>
+      <statement> ...)
+  | (for (<expression> <expression> <expression>)
+      <statement> ...)
   | (return <expression>)
 
 ```

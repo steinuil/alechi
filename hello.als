@@ -8,5 +8,7 @@
   ('string "ayy lmao"))
 
 (proc main () ayy_int
+  (for ((decl i int 0) (<= (+ 1 i) 10) (++ i))
+    (ignore (printf ('string "%d\n") i)))
   (ignore (puts ayy_str))
   (return ('int 0)))
