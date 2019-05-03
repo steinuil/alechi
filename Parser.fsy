@@ -1,0 +1,83 @@
+%{
+open Ast
+%}
+
+%start initial
+%type <Ast.Decl list> initial
+
+%token <string> IDENT
+
+%token <string> STRING_LIT
+%token <string> NUMBER_LIT
+
+%token SEMI
+%token COMMA
+%token EQUALS
+
+%token LPAREN RPAREN
+%token LBRACK RBRACK
+%token LBRACE RBRACE
+
+%token PROC
+%token IF ELSE ELSE_IF
+%token WHILE
+%token LET
+
+%token EOF
+
+%%
+
+initial:
+| EOF { [] }
+| topLevelDecl EOF { [$1] }
+| topLevelDecl SEMI initial { $1 :: $3 }
+
+
+topLevelDecl:
+| PROC IDENT LPAREN argumentDefList RPAREN LBRACE statementList RBRACE { Proc($2, $4, $7) }
+
+
+argumentDefList:
+| argumentDef COMMA argumentDefList { $1 :: $3 }
+| argumentDef { [$1] }
+| { [] }
+
+
+argumentDef:
+| IDENT { $1 }
+
+
+statementList:
+| statement SEMI statementList { $1 :: $3 }
+| expression { [Expr $1] }
+
+
+statement:
+| LET IDENT { Let($2, None) }
+| LET IDENT EQUALS LBRACE statementList RBRACE { Let($2, Some($5)) }
+| WHILE statementList LBRACE statementList RBRACE { While($2, $4) }
+
+
+expression:
+| IF statementList LBRACE statementList RBRACE { IfElse($2, $4, None) }
+| IF statementList LBRACE statementList RBRACE
+  ELSE LBRACE statementList RBRACE { IfElse($2, $4, Some($8)) }
+| IDENT LPAREN argumentList RPAREN { FunCall($1, $3) }
+| IDENT { Ident($1) }
+| literal { $1 }
+
+
+argumentList:
+| statementList COMMA argumentList { $1 :: $3 }
+| statementList { [$1] }
+| { [] }
+
+
+literal:
+| STRING_LIT { String($1) }
+| NUMBER_LIT { Number($1) }
+| arrayLiteral { $1 }
+
+
+arrayLiteral:
+| LBRACK argumentList RBRACK { Array($2) }

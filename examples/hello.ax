@@ -1,0 +1,28 @@
+proc main() {
+  if neq(getpid(), 1) {
+    1
+  } else {
+    let set;
+
+    let x = { sigfillset(ref(set)) };
+    let x = { sigprocmask(SIG_BLOCK, ref(set), 0) };
+
+    let status;
+
+    let x = {
+      if fork() {
+        while true {
+          wait(ref(status))
+        };
+        0
+      }
+    };
+
+    let x = { sigprocmask(SIG_UNBLOCK, ref(set), 0) };
+
+    let x = { setsid() };
+    let x = { setpgid() };
+    
+    execve(0, [l, NULL], [NULL])
+  }
+}
