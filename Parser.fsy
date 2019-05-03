@@ -54,6 +54,7 @@ statementList:
 
 statement:
 | LET IDENT { Let($2, None) }
+| LET IDENT EQUALS expression { Let($2, Some([Expr $4])) }
 | LET IDENT EQUALS LBRACE statementList RBRACE { Let($2, Some($5)) }
 | WHILE statementList LBRACE statementList RBRACE { While($2, $4) }
 
