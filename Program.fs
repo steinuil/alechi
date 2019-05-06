@@ -1,5 +1,4 @@
-﻿open System
-open System.IO
+﻿open System.IO
 
 let lexStuff text =
     let lexbuf = FSharp.Text.Lexing.LexBuffer<char>.FromTextReader text

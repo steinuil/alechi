@@ -3,9 +3,11 @@ module Lexer
 
 
 open System
+open System.Text
 open FSharp.Text.Lexing
 
 open Parser
+
 
 let newline (lexbuf: LexBuffer<char>) =
     lexbuf.StartPos <- lexbuf.StartPos.NextLine
@@ -42,8 +44,22 @@ rule lex = parse
 | "," { COMMA }
 | "=" { EQUALS }
 
+| '\"'
+{
+  let buf = new StringBuilder 100
+  string buf lexbuf
+}
+
 | integerLiteral { NUMBER_LIT(lexeme lexbuf) }
 | ident { IDENT(lexeme lexbuf) }
 
 | eof { EOF }
 | _ { failwith ("unexpected token: " + lexeme lexbuf)}
+
+
+and string buf = parse
+| '\\' '\\' { buf.Append "\\" |> ignore; string buf lexbuf }
+| '\\' '\"' { buf.Append "\"" |> ignore; string buf lexbuf }
+| '\"' { STRING_LIT(buf.ToString()) }
+| eof { failwithf "unexpected EOF inside string" }
+| _  { buf.Append(lexeme lexbuf) |> ignore; string buf lexbuf }
