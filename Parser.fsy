@@ -50,6 +50,7 @@ argumentDef:
 statementList:
 | statement SEMI statementList { $1 :: $3 }
 | expression { [Expr $1] }
+| { [] }
 
 
 statement:

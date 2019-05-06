@@ -13,7 +13,6 @@ proc main() {
       while true {
         wait(ref(status))
       };
-      0
     };
 
     let _ = sigprocmask(SIG_UNBLOCK, ref(set), 0);
@@ -21,6 +20,6 @@ proc main() {
     let _ = setsid();
     let _ = setpgid();
     
-    execve(0, [l, NULL], [NULL])
+    execve("/etc/rc", ["rc", NULL], [NULL])
   }
 }

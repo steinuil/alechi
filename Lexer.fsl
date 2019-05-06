@@ -13,7 +13,7 @@ let newline (lexbuf: LexBuffer<char>) =
     lexbuf.StartPos <- lexbuf.StartPos.NextLine
 
 let lexeme (lexbuf : LexBuffer<char>) =
-  LexBuffer<char>.LexemeString lexbuf
+    LexBuffer<char>.LexemeString lexbuf
 }
 
 
@@ -46,7 +46,7 @@ rule lex = parse
 
 | '\"'
 {
-  let buf = new StringBuilder 100
+  let buf = new StringBuilder 24
   string buf lexbuf
 }
 
