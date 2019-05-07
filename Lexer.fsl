@@ -44,6 +44,8 @@ rule lex = parse
 | "," { COMMA }
 | "=" { EQUALS }
 
+| "//" { lineComment lexbuf }
+
 | '\"'
 {
   let buf = new StringBuilder 24
@@ -63,3 +65,8 @@ and string buf = parse
 | '\"' { STRING_LIT(buf.ToString()) }
 | eof { failwithf "unexpected EOF inside string" }
 | _  { buf.Append(lexeme lexbuf) |> ignore; string buf lexbuf }
+
+
+and lineComment = parse
+| newline { lex lexbuf }
+| _ { lineComment lexbuf }
