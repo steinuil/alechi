@@ -1,0 +1,72 @@
+{
+module Lexer
+
+
+open System
+open System.Text
+open FSharp.Text.Lexing
+
+open Parser
+
+
+let newline (lexbuf: LexBuffer<char>) =
+    lexbuf.StartPos <- lexbuf.StartPos.NextLine
+
+let lexeme (lexbuf : LexBuffer<char>) =
+    LexBuffer<char>.LexemeString lexbuf
+}
+
+
+let digit = ['0'-'9']
+let integerLiteral = ['-']?digit+
+
+let identChars = ['a'-'z' 'A'-'Z' '_']
+let ident = identChars (digit | identChars)*
+
+let whitespace = [' ' '\t']
+let newline = ('\n' | '\r' '\n')
+
+
+rule lex = parse
+| whitespace { lex lexbuf }
+| newline    { newline lexbuf; lex lexbuf }
+
+| "proc" { PROC }
+| "if" { IF }
+| "else" { ELSE }
+| "else if" { ELSE_IF }
+| "while" { WHILE }
+| "let" { LET }
+| "(" { LPAREN } | ")" { RPAREN }
+| "[" { LBRACK } | "]" { RBRACK }
+| "{" { LBRACE } | "}" { RBRACE }
+| ";" { SEMI }
+| "," { COMMA }
+| "=" { EQUALS }
+
+| "//" { lineComment lexbuf }
+
+| '\"'
+{
+  let buf = new StringBuilder 24
+  string buf lexbuf
+}
+
+| integerLiteral { NUMBER_LIT(lexeme lexbuf) }
+| ident { IDENT(lexeme lexbuf) }
+
+| eof { EOF }
+| _ { failwith ("unexpected token: " + lexeme lexbuf)}
+
+
+and string buf = parse
+| '\\' '\\' { buf.Append "\\" |> ignore; string buf lexbuf }
+| '\\' '\"' { buf.Append "\"" |> ignore; string buf lexbuf }
+| '\"' { STRING_LIT(buf.ToString()) }
+| eof { failwithf "unexpected EOF inside string" }
+| _  { buf.Append(lexeme lexbuf) |> ignore; string buf lexbuf }
+
+
+and lineComment = parse
+| newline { lex lexbuf }
+| _ { lineComment lexbuf }

@@ -1,0 +1,4 @@
+proc main() { // aaaaaa : asd
+  let _ = print_endline("sup \\\"a");
+  0
+}

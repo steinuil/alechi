@@ -1,0 +1,7 @@
+proc main() { // required
+  let _ = if { // required
+  } else { // required
+  };
+  while { // required
+  };
+}
