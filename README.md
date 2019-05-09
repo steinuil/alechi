@@ -60,6 +60,9 @@ Some stuff to read and research.
 ### Practical Affine Types
 * http://users.eecs.northwestern.edu/~jesse/pubs/alms/
 
+### All the languages together
+* https://www.youtube.com/watch?v=3yVc5t-g-VU
+
 
 # Stuff
 The name is the italian spelling of the japanese nickname (Aleki) of Alexandrite

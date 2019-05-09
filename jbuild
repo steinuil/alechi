@@ -1,8 +1,0 @@
-(jbuild_version 1)
-
-(library
- ((name compiler)
-  (libraries (sexplib))
-  (inline_tests
-   ((deps (hello.als))))
-  (preprocess (pps (ppx_inline_test)))))
