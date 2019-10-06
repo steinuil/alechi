@@ -7,5 +7,5 @@ open Microsoft.VisualStudio.TestTools.UnitTesting
 type TestClass () =
 
     [<TestMethod>]
-    member this.TestMethodPassing () =
+    member __.TestMethodPassing () =
         Assert.IsTrue(true);
