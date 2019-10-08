@@ -7,22 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Ast.fs" />
-    <FsYacc Include="Parser.fsy">
-      <OtherFlags>--module Parser</OtherFlags>
-    </FsYacc>
-    <Compile Include="Parser.fsi" />
-    <Compile Include="Parser.fs" />
-    <FsLex Include="Lexer.fsl">
-      <OtherFlags>--unicode</OtherFlags>
-    </FsLex>
-    <Compile Include="Lexer.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FsLexYacc" Version="9.0.2" />
     <PackageReference Include="FsLexYacc.Runtime" Version="9.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Alechi.Compiler\Alechi.Compiler.fsproj" />
   </ItemGroup>
 
 </Project>

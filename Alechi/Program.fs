@@ -1,4 +1,9 @@
-﻿open System.IO
+﻿module Alechi.Program
+
+
+open System.IO
+open Alechi.Compiler
+
 
 let lexStuff text =
     let lexbuf = FSharp.Text.Lexing.LexBuffer<char>.FromTextReader text

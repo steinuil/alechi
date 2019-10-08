@@ -1,7 +1,4 @@
 {
-module Lexer
-
-
 open System
 open System.Text
 open FSharp.Text.Lexing

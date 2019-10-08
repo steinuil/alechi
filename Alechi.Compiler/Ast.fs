@@ -1,4 +1,4 @@
-module Ast
+module Alechi.Compiler.Ast
 
 
 type Statement =
@@ -11,7 +11,8 @@ and Expression =
   | FunCall of string * Statement list list
   | Ident of string
   | String of string
-  | Number of string
+  | Number of float
+  | Bool of bool
   | Array of Statement list list
 
 

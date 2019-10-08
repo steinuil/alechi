@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FsLex Include="Lexer.fsl">
+      <OtherFlags>--module Alechi.Compiler.Lexer --unicode</OtherFlags>
+    </FsLex>
+    <FsYacc Include="Parser.fsy">
+      <OtherFlags>--module Alechi.Compiler.Parser</OtherFlags>
+    </FsYacc>
+    
+    <Compile Include="Ast.fs" />
+    <Compile Include="C.fs" />
+    <Compile Include="Parser.fsi" />
+    <Compile Include="Parser.fs" />
+    <Compile Include="Lexer.fsi" />
+    <Compile Include="Lexer.fs" />
+    <Compile Include="Library.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FParsec" Version="1.0.3" />
+    <PackageReference Include="FsLexYacc" Version="9.0.2" />
+    <PackageReference Include="FsLexYacc.Runtime" Version="9.0.2" />
+  </ItemGroup>
+
+</Project>
