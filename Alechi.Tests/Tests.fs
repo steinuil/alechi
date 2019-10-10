@@ -10,8 +10,17 @@ type TestClass () =
 
     [<TestMethod>]
     member __.TestMethodPassing () =
-        let x = new StringReader "proc main() { 0 }"
+        let out =
+            FParsec.CharParsers.run Parse.proc
+                "proc ident() { 0 }"
+        let out =
+            match out with
+            | FParsec.CharParsers.Success (x, _, _) -> x
+            | _ -> failwith "aaa"
         Assert.AreEqual(
-            Compile.parse x,
-            [Ast.Proc("main", [], [Ast.Expr(Ast.Number "0")])]
+            out,
+            Ast.TopLevel.Proc(
+                "ident", [],
+                Ast.Expression.Constant (Ast.Constant.Int 0L)
+            )
         )

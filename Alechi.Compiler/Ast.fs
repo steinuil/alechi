@@ -1,20 +1,37 @@
-module Alechi.Compiler.Ast
+namespace Alechi.Compiler.Ast
 
 
-type Statement =
-  | Let of string * Statement list option
-  | While of Statement list * Statement list
-  | Expr of Expression
-
-and Expression =
-  | IfElse of Statement list * Statement list * Statement list option
-  | FunCall of string * Statement list list
-  | Ident of string
-  | String of string
-  | Number of float
-  | Bool of bool
-  | Array of Statement list list
+type Ident = string
 
 
-type Decl =
-  | Proc of string * string list * Statement list
+type LongIdent = Ident
+
+
+[<RequireQualifiedAccess>]
+type Constant =
+    | Int of int64
+    | Float of float
+    // | Char of char
+    | String of string
+    | Bool of bool
+    | Unit
+
+
+[<RequireQualifiedAccess>]
+type Expression =
+    | Id of LongIdent
+    | Constant of Constant
+    | Let of Ident * Expression
+    | Apply of Expression * Expression list
+    | If of Expression * Expression * Expression option
+    | While of Expression * Expression
+    | Tuple of Expression list
+
+
+type Arguments = Ident list
+
+
+[<RequireQualifiedAccess>]
+type TopLevel =
+    | Import of string
+    | Proc of Ident * Arguments * Expression
