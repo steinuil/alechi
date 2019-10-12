@@ -19,7 +19,7 @@ type Constant =
 
 [<RequireQualifiedAccess>]
 type Expression =
-    | Id of LongIdent
+    | Identifier of LongIdent
     | Constant of Constant
     | Let of Ident * Expression * Expression
     | Apply of Expression * Expression list

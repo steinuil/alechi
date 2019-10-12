@@ -10,21 +10,39 @@ let ws = spaces
 let ws1 = spaces1
 
 
-let TRUE = stringReturn "true" (Constant.Bool true)
-let FALSE = stringReturn "false" (Constant.Bool false)
-let UNIT = stringReturn "()" Constant.Unit
-let INTEGER = pint64 |>> Constant.Int
-let FLOAT = pfloat |>> Constant.Float
+let keywords = [
+    "true"
+    "false"
+    "let"
+    "if"
+    "else" 
+    "proc"
+]
 
 
-let ident = pstring "ident"
+let ident =
+    let p =
+        Seq.append ['a' .. 'z'] ['_']
+        |> anyOf
+        |> many1Chars
+    let checkNotKeyword id =
+        if List.contains id keywords then
+            fail <| sprintf "ident %s is a keyword" id
+        else
+            preturn id
+    p >>= checkNotKeyword |> attempt
+
+
+let cString = skipChar '"' >>. pstring "string" .>> skipChar '"' |>> Constant.String
 
 
 let constant =
-    TRUE <|> FALSE <|> UNIT <|> INTEGER <|> FLOAT
-
-
-let constantExpr = constant |>> Expression.Constant
+    let cTrue = stringReturn "true" (Constant.Bool true)
+    let cFalse = stringReturn "false" (Constant.Bool false)
+    let cUnit = stringReturn "()" Constant.Unit
+    let cInteger = pint64 |>> Constant.Int
+    let cFloat = pfloat |>> Constant.Float
+    cTrue <|> cFalse <|> cUnit <|> cInteger <|> cFloat <|> cString
 
 
 let expression, expressionRef = createParserForwardedToRef()
@@ -47,7 +65,10 @@ let exprLet =
     |> pipe3 bind body expression
 
 
-let simpleExpression = constantExpr <|> ifExpr
+let simpleExpression =
+    let constantExpr = constant |>> Expression.Constant
+    let identExpr = ident |>> Expression.Identifier
+    constantExpr <|> identExpr <|> ifExpr
 
 
 do expressionRef := simpleExpression <|> exprLet
