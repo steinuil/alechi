@@ -27,7 +27,11 @@
       "group": {
         "kind": "test",
         "isDefault": true
-      }
+      },
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": "$msCompile"
     }
   ]
 }

@@ -6,6 +6,10 @@ open Alechi.Compiler.Ast
 open FParsec
 
 
+let ws = spaces
+let ws1 = spaces1
+
+
 let TRUE = stringReturn "true" (Constant.Bool true)
 let FALSE = stringReturn "false" (Constant.Bool false)
 let UNIT = stringReturn "()" Constant.Unit
@@ -20,36 +24,46 @@ let constant =
     TRUE <|> FALSE <|> UNIT <|> INTEGER <|> FLOAT
 
 
+let constantExpr = constant |>> Expression.Constant
+
+
 let expression, expressionRef = createParserForwardedToRef()
 
 
+let ifExpr =
+    let cond = skipString "if" >>. ws >>. expression .>> ws
+    let thenExpr = skipChar '{' >>. ws >>. expression .>> ws .>> skipChar '}' .>> ws
+    let elseExpr = skipString "else" >>. ws >>. thenExpr
+    Expression.If
+    |> uncurry3
+    |> pipe3 cond thenExpr (opt elseExpr)
+
+
 let exprLet =
-    pipe2
-        (skipString "let" >>. spaces1 >>. ident
-        .>> spaces .>> skipChar '=' .>> spaces)
-        expression
-        (uncurry2 Expression.Let)
+    let bind = skipString "let" >>. ws1 >>. ident .>> ws .>> skipChar '=' .>> ws
+    let body = expression .>> ws .>> skipChar ';' .>> ws
+    Expression.Let
+    |> uncurry3
+    |> pipe3 bind body expression
 
 
-do expressionRef :=
-    (constant |>> Expression.Constant)
-    <|> exprLet
+let simpleExpression = constantExpr <|> ifExpr
+
+
+do expressionRef := simpleExpression <|> exprLet
 
 
 let procName =
-    skipString "proc" >>. spaces1 >>. ident .>> spaces
-
-
-let argument =
-    spaces >>. ident .>> spaces
+    skipString "proc" >>. ws1 >>. ident .>> ws
 
 
 let arguments =
-    skipChar '(' >>. sepBy argument (skipChar ',') .>> skipChar ')' .>> spaces
+    let argument = ws >>. ident .>> ws
+    skipChar '(' >>. sepBy argument (skipChar ',') .>> skipChar ')' .>> ws
 
 
 let procBody =
-    skipChar '{' >>. spaces >>. expression .>> spaces .>> skipChar '}'
+    skipChar '{' >>. ws >>. expression .>> ws .>> skipChar '}'
 
 
 let proc: Parser<_, unit> =

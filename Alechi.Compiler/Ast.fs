@@ -21,7 +21,7 @@ type Constant =
 type Expression =
     | Id of LongIdent
     | Constant of Constant
-    | Let of Ident * Expression
+    | Let of Ident * Expression * Expression
     | Apply of Expression * Expression list
     | If of Expression * Expression * Expression option
     | While of Expression * Expression
