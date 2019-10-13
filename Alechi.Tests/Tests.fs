@@ -1,147 +1,67 @@
-module Alechi.Tests.T
+module Alechi.Tests.Base
 
 
 open NUnit.Framework
 open Alechi.Compiler
 open Alechi.Compiler.Ast
+open FsUnit
+open Utils
 
 
-let run = FParsec.CharParsers.run
-
-
-let toSucc: FParsec.CharParsers.ParserResult<_, _> -> obj = function
-    | FParsec.CharParsers.Success (out, _, _) -> out :> obj
-    | otherwise -> otherwise :> obj
-
-
-let isErrMsg: FParsec.CharParsers.ParserResult<_, _> -> obj = function
-    | FParsec.CharParsers.Failure _ -> true :> obj
-    | otherwise -> otherwise :> obj
-
-
-module ``ident tests`` =
+[<TestFixture>]
+module ``ident`` =
     [<Test>]
-    let ``aaa`` () =
-        Assert.AreEqual(
-            "ident",
-            "ident" |> run Parse.ident |> toSucc
-        )
-        Assert.AreEqual(
-            "id",
-            "id" |> run Parse.ident |> toSucc
-        )
+    let ``a-z attributes`` () =
+        "ident"
+        |> run Parse.ident
+        |> succeeds
+        |> should equal "ident"
 
     [<Test>]
-    let ``underscores are allowed`` () =
-        Assert.AreEqual(
-            "a_b",
-            "a_b" |> run Parse.ident |> toSucc
-        )
+    let ``with underscores`` () =
+        "a_b"
+        |> run Parse.ident
+        |> succeeds
+        |> should equal "a_b"
 
     [<Test>]
-    let ``does not match an empty identifier`` () =
-        Assert.AreEqual(
-            true,
-            "" |> run Parse.ident |> isErrMsg
-        )
+    let ``should be at least one character long`` () =
+        ""
+        |> run Parse.ident
+        |> fails
+        |> ignore
+
+
+[<TestFixture (true, "true")>]
+[<TestFixture (false, "false")>]
+type ``boolean constants`` (b: bool, str: string) =
+    [<Test>]
+    member __.``parses to the constant`` () =
+        str
+        |> run Parse.constant
+        |> succeeds
+        |> should equal (Constant.Bool b)
 
 
 [<Test>]
-let ``proc toplevel statement`` () =
-    Assert.AreEqual(
-        TopLevel.Proc(
-            "ident", [],
-            Expression.Constant (Constant.Int 0L)
-        ),
+let ``unit literal`` () =
+    "()"
+    |> run Parse.constant
+    |> succeeds
+    |> should equal Constant.Unit
+
+
+[<TestFixture>]
+module ``proc statement`` =
+    [<Test>]
+    let ``no arguments`` () =
         "proc ident() { 0 }"
-        |> run Parse.topLevel |> toSucc
-    )
-
-
-module ``constant tests`` =
-    [<Test>]
-    let ``boolean`` () =
-        Assert.AreEqual(
-            Constant.Bool true,
-            "true" |> run Parse.constant |> toSucc
-        )
-        Assert.AreEqual(
-            Constant.Bool false,
-            "false" |> run Parse.constant |> toSucc
-        )
-
-    [<Test>]
-    let ``unit`` () =
-        Assert.AreEqual(
-            Constant.Unit,
-            "()" |> run Parse.constant |> toSucc
-        )
-
-    [<Test>]
-    let ``string`` () =
-        Assert.AreEqual(
-            Constant.String "string",
-            "\"string\"" |> run Parse.constant |> toSucc
-        )
-
-
-module ``let expression`` =
-    [<Test>]
-    let ``let expression`` () =
-        Assert.AreEqual(
-            Expression.Let("ident",
-                Expression.Constant (Constant.Int 0L),
-                Expression.Constant (Constant.Int 2L)
-            ),
-            "let ident = 0; 2"
-            |> run Parse.expression |> toSucc
-        )
-        Assert.AreEqual(
-            Expression.Let("ident",
-                Expression.Constant (Constant.Int 2L),
+        |> run Parse.topLevel
+        |> succeeds
+        |> should equal (
+            TopLevel.Proc(
+                "ident",
+                [],
                 Expression.Constant (Constant.Int 0L)
-            ),
-            "let ident=2  ; 0"
-            |> run Parse.expression |> toSucc
-        )
-        Assert.AreEqual(
-            Expression.Let("ident",
-                Expression.Constant (Constant.Int 2L),
-                Expression.Let("ident",
-                    Expression.Constant (Constant.Int 1L),
-                    Expression.Constant (Constant.Int 0L)
-                )
-            ),
-            "let ident = 2; let ident = 1; 0"
-            |> run Parse.expression |> toSucc
-        )
-
-    [<Test>]
-    let ``asdas`` () =
-        Assert.AreEqual(
-            Expression.Let("test",
-                Expression.Identifier "one",
-                Expression.Identifier "two"
-            ),
-            "let test = one; two"
-            |> run Parse.expression |> toSucc
-        )
-
-    [<Test>]
-    let ``can't use a keyword there`` () =
-        Assert.AreEqual(
-            true,
-            "let let = 0; 1"
-            |> run Parse.expression |> isErrMsg
-        )
-
-    [<Test>]
-    let ``ident that starts with a keyword`` () =
-        Assert.AreEqual(
-            Expression.Let("leta",
-                Expression.Identifier "one",
-                Expression.Identifier "two"
-            ),
-            "let leta = one; two"
-            |> run Parse.expression |> toSucc
+            )
         )

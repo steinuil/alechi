@@ -8,6 +8,7 @@ open FsUnit
 open Utils
 
 
+[<TestFixture>]
 module ``expression blocks`` =
     [<Test>]
     let ``simple expression inside block`` () =
@@ -56,7 +57,7 @@ module ``expression blocks`` =
         |> run Parse.expression
         |> succeeds
         |> should equal (
-            Expression.Let(
+            Expression.Let (
                 "x",
                 Expression.Constant Constant.Unit,
                 Expression.Constant Constant.Unit
@@ -64,6 +65,7 @@ module ``expression blocks`` =
         )
 
 
+[<TestFixture>]
 module ``if expression`` =
     [<Test>]
     let ``then and else branches`` () =
@@ -90,3 +92,61 @@ module ``if expression`` =
                 None
             )
         )
+
+
+[<TestFixture>]
+module ``let expression`` =
+    [<Test>]
+    let ``simple let expression`` () =
+        "let ident = 0; 2"
+        |> run Parse.expression
+        |> succeeds
+        |> should equal (
+            Expression.Let (
+                "ident",
+                Expression.Constant (Constant.Int 0L),
+                Expression.Constant (Constant.Int 2L)
+            )
+        )
+
+    [<Test>]
+    let ``nested in the body`` () =
+        "let ident = 2; let ident = 1; 0"
+        |> run Parse.expression
+        |> succeeds
+        |> should equal (
+            Expression.Let (
+                "ident",
+                Expression.Constant (Constant.Int 2L),
+                Expression.Let (
+                    "ident",
+                    Expression.Constant (Constant.Int 1L),
+                    Expression.Constant (Constant.Int 0L)
+                )
+            )
+        )
+
+    [<Test>]
+    let ``nested in the binding`` () =
+        "let id_ = { let id = 0; 1 }; ()"
+        |> run Parse.expression
+        |> succeeds
+        |> should equal (
+            Expression.Let (
+                "id_",
+                Expression.Let (
+                    "id",
+                    Expression.Constant (Constant.Int 0L),
+                    Expression.Constant (Constant.Int 1L)
+                ),
+                Expression.Constant Constant.Unit
+            )
+        )
+
+    [<Test>]
+    [<Ignore "have to implement this">]
+    let ``fails when there's a sequence expression without brackets in the binding`` () =
+        "let id_ = let id = 0; 1; 2"
+        |> run Parse.expression
+        |> fails
+        |> ignore

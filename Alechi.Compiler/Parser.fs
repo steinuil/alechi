@@ -80,7 +80,7 @@ let eSimple =
     eConstant <|> eLongIdent <|> eIf
 
 
-let eNeedsWrapped =
+let eSequencing =
     eLet
 
 
@@ -99,7 +99,7 @@ let eBlock =
 //     skipChar '{' >>. ws >>. eComplexUnwrapped .>> ws .>> skipChar '}'
 
 
-do expressionRef := eSimple <|> eNeedsWrapped <|> eBlock
+do expressionRef := eSimple <|> eSequencing <|> eBlock
 
 
 let pName =
