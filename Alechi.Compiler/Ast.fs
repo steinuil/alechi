@@ -22,6 +22,7 @@ type Expression =
     | Identifier of LongIdent
     | Constant of Constant
     | Let of Ident * Expression * Expression
+    | LetUnit of Expression * Expression
     | Apply of Expression * Expression list
     | If of Expression * Expression * Expression option
     | While of Expression * Expression

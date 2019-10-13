@@ -6,6 +6,9 @@ open Alechi.Compiler.Ast
 open FParsec
 
 
+type UserData = unit
+
+
 let ws = spaces
 let ws1 = spaces1
 
@@ -20,20 +23,25 @@ let keywords = [
 ]
 
 
-let ident =
-    let p =
-        Seq.append ['a' .. 'z'] ['_']
-        |> anyOf
-        |> many1Chars
+let identChars = Seq.append ['a' .. 'z'] ['_']
+
+
+let ident: Parser<Ident, _> =
+    let ident = identChars |> anyOf |> many1Chars
     let checkNotKeyword id =
         if List.contains id keywords then
             fail <| sprintf "ident %s is a keyword" id
         else
             preturn id
-    p >>= checkNotKeyword |> attempt
+    ident >>= checkNotKeyword |> attempt
 
 
-let cString = skipChar '"' >>. pstring "string" .>> skipChar '"' |>> Constant.String
+let longIdent: Parser<LongIdent, _> = ident
+
+
+let cString =
+    skipChar '"' >>. pstring "string" .>> skipChar '"'
+    |>> Constant.String
 
 
 let constant =
@@ -48,33 +56,45 @@ let constant =
 let expression, expressionRef = createParserForwardedToRef()
 
 
-let ifExpr =
+let eIf =
     let cond = skipString "if" >>. ws >>. expression .>> ws
-    let thenExpr = skipChar '{' >>. ws >>. expression .>> ws .>> skipChar '}' .>> ws
-    let elseExpr = skipString "else" >>. ws >>. thenExpr
-    Expression.If
-    |> uncurry3
-    |> pipe3 cond thenExpr (opt elseExpr)
+    let eBlock = skipChar '{' >>. ws >>. expression .>> ws .>> skipChar '}' .>> ws
+    let elseBlock = skipString "else" >>. ws >>. eBlock
+    Expression.If |> uncurry3 |> pipe3 cond eBlock (opt elseBlock)
 
 
-let exprLet =
+let eLetUnit =
+    let before = expression .>> ws .>> skipChar ';' .>> ws
+    Expression.LetUnit |> uncurry2 |> pipe2 before expression
+
+
+let eLet =
     let bind = skipString "let" >>. ws1 >>. ident .>> ws .>> skipChar '=' .>> ws
     let body = expression .>> ws .>> skipChar ';' .>> ws
-    Expression.Let
-    |> uncurry3
-    |> pipe3 bind body expression
+    Expression.Let |> uncurry3 |> pipe3 bind body expression
 
 
-let simpleExpression =
-    let constantExpr = constant |>> Expression.Constant
-    let identExpr = ident |>> Expression.Identifier
-    constantExpr <|> identExpr <|> ifExpr
+let eSimple =
+    let eConstant = constant |>> Expression.Constant
+    let eLongIdent = longIdent |>> Expression.Identifier
+    eConstant <|> eLongIdent <|> eIf
 
 
-do expressionRef := simpleExpression <|> exprLet
+let eBlock =
+    skipChar '{' >>. ws >>. expression .>> ws .>> skipChar '}'
 
 
-let procName =
+// let eComplexUnwrapped = eLet <|> eLetUnit
+
+
+// let eComplex =
+//     skipChar '{' >>. ws >>. eComplexUnwrapped .>> ws .>> skipChar '}'
+
+
+do expressionRef := eSimple <|> eLet <|> eBlock
+
+
+let pName =
     skipString "proc" >>. ws1 >>. ident .>> ws
 
 
@@ -83,9 +103,13 @@ let arguments =
     skipChar '(' >>. sepBy argument (skipChar ',') .>> skipChar ')' .>> ws
 
 
-let procBody =
+let pBody =
     skipChar '{' >>. ws >>. expression .>> ws .>> skipChar '}'
 
 
-let proc: Parser<_, unit> =
-    pipe3 procName arguments procBody (uncurry3 TopLevel.Proc)
+let proc =
+    pipe3 pName arguments pBody (uncurry3 TopLevel.Proc)
+
+
+let topLevel: Parser<_, UserData> =
+    proc

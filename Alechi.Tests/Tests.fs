@@ -1,4 +1,4 @@
-module Alechi.Tests
+module Alechi.Tests.T
 
 
 open NUnit.Framework
@@ -26,12 +26,23 @@ module ``ident tests`` =
             "ident",
             "ident" |> run Parse.ident |> toSucc
         )
-
-    [<Test>]
-    let x () =
         Assert.AreEqual(
             "id",
             "id" |> run Parse.ident |> toSucc
+        )
+
+    [<Test>]
+    let ``underscores are allowed`` () =
+        Assert.AreEqual(
+            "a_b",
+            "a_b" |> run Parse.ident |> toSucc
+        )
+
+    [<Test>]
+    let ``does not match an empty identifier`` () =
+        Assert.AreEqual(
+            true,
+            "" |> run Parse.ident |> isErrMsg
         )
 
 
@@ -43,7 +54,7 @@ let ``proc toplevel statement`` () =
             Expression.Constant (Constant.Int 0L)
         ),
         "proc ident() { 0 }"
-        |> run Parse.proc |> toSucc
+        |> run Parse.topLevel |> toSucc
     )
 
 
@@ -117,11 +128,22 @@ module ``let expression`` =
         )
 
     [<Test>]
-    let ``let let`` () =
+    let ``can't use a keyword there`` () =
         Assert.AreEqual(
             true,
             "let let = 0; 1"
             |> run Parse.expression |> isErrMsg
+        )
+
+    [<Test>]
+    let ``ident that starts with a keyword`` () =
+        Assert.AreEqual(
+            Expression.Let("leta",
+                Expression.Identifier "one",
+                Expression.Identifier "two"
+            ),
+            "let leta = one; two"
+            |> run Parse.expression |> toSucc
         )
 
 
@@ -149,4 +171,3 @@ module ``if expression`` =
             "if 0 { 1 }"
             |> run Parse.expression |> toSucc
         )
-    
