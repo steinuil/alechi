@@ -33,7 +33,7 @@ let ident: Parser<Ident, _> =
             fail <| sprintf "ident %s is a keyword" id
         else
             preturn id
-    ident >>= checkNotKeyword |> attempt
+    ident >>= checkNotKeyword
 
 
 let longIdent: Parser<LongIdent, _> = ident
@@ -76,8 +76,16 @@ let eLet =
 
 let eSimple =
     let eConstant = constant |>> Expression.Constant
-    let eLongIdent = longIdent |>> Expression.Identifier
+    let eLongIdent = attempt longIdent |>> Expression.Identifier
     eConstant <|> eLongIdent <|> eIf
+
+
+let eNeedsWrapped =
+    eLet
+
+
+// let eForcedBlock =
+//     skipChar '{' >>. ws >>. eNeedsWrapped .>> ws .>> skipChar '}'
 
 
 let eBlock =
@@ -91,7 +99,7 @@ let eBlock =
 //     skipChar '{' >>. ws >>. eComplexUnwrapped .>> ws .>> skipChar '}'
 
 
-do expressionRef := eSimple <|> eLet <|> eBlock
+do expressionRef := eSimple <|> eNeedsWrapped <|> eBlock
 
 
 let pName =

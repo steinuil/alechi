@@ -145,29 +145,3 @@ module ``let expression`` =
             "let leta = one; two"
             |> run Parse.expression |> toSucc
         )
-
-
-module ``if expression`` =
-    [<Test>]
-    let `` `` () =
-        Assert.AreEqual(
-            Expression.If(
-                Expression.Constant (Constant.Int 0L),
-                Expression.Constant (Constant.Int 1L),
-                Some (Expression.Constant (Constant.Int 2L))
-            ),
-            "if 0 { 1 } else { 2 }"
-            |> run Parse.expression |> toSucc
-        )
-
-    [<Test>]
-    let ``  `` () =
-        Assert.AreEqual(
-            Expression.If(
-                Expression.Constant (Constant.Int 0L),
-                Expression.Constant (Constant.Int 1L),
-                None
-            ),
-            "if 0 { 1 }"
-            |> run Parse.expression |> toSucc
-        )
