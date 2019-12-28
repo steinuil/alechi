@@ -65,3 +65,12 @@ module ``proc statement`` =
                 Expression.Constant (Constant.Int 0L)
             )
         )
+
+
+
+[<Test>]
+let ``import statement`` () =
+    "import \"string\""
+    |> run Parse.topLevel
+    |> succeeds
+    |> should equal (TopLevel.Import "string")

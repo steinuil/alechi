@@ -39,9 +39,12 @@ let ident: Parser<Ident, _> =
 let longIdent: Parser<LongIdent, _> = ident
 
 
-let cString =
+let parseString =
     skipChar '"' >>. pstring "string" .>> skipChar '"'
-    |>> Constant.String
+
+
+let cString =
+    parseString |>> Constant.String
 
 
 let constant =
@@ -119,5 +122,9 @@ let proc =
     pipe3 pName arguments pBody (uncurry3 TopLevel.Proc)
 
 
+let import_ =
+  skipString "import" >>. ws1 >>. parseString .>> ws
+  |>> TopLevel.Import
+
 let topLevel: Parser<_, UserData> =
-    proc
+    proc <|> import_
